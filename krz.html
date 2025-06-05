@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Task Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 2rem auto;
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #task-form {
+      display: flex;
+      margin-bottom: 1rem;
+    }
+    #task-input {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+    }
+    #add-task-btn {
+      padding: 0 1rem;
+      margin-left: 0.5rem;
+      font-size: 1rem;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #add-task-btn:hover {
+      background: #218838;
+    }
+    ul#task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul#task-list li {
+      background: white;
+      margin-bottom: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px #eee;
+    }
+    ul#task-list li.completed .task-title {
+      text-decoration: line-through;
+      color: #999;
+      font-style: italic;
+    }
+    .task-title {
+      flex: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+    button.delete-btn {
+      background: #dc3545;
+      border: none;
+      color: white;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button.delete-btn:hover {
+      background: #c82333;
+    }
+    /* Filter buttons */
+    .filters {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+    .filters button {
+      padding: 0.5rem 1rem;
+      border: 1px solid #28a745;
+      background: white;
+      color: #28a745;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filters button.active,
+    .filters button:hover {
+      background: #28a745;
+      color: white;
+    }
+    /* Validation message */
+    #error-msg {
+      color: #dc3545;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Task Manager</h1>
+
+  <div id="error-msg"></div>
+
+  <form id="task-form" autocomplete="off">
+    <input type="text" id="task-input" placeholder="Enter new task..." />
+    <button type="submit" id="add-task-btn">Add</button>
+  </form>
+
+  <div class="filters">
+    <button data-filter="all" class="active">All</button>
+    <button data-filter="pending">Pending</button>
+    <button data-filter="completed">Completed</button>
+  </div>
+
+  <ul id="task-list"></ul>
+
+  <script>
+    // Hardcoded initial tasks array
+    const tasks = [
+      { id: 1, title: 'Buy groceries', completed: false },
+      { id: 2, title: 'Read a book', completed: true }
+    ];
+
+    let currentFilter = 'all';
+
+    const taskListEl = document.getElementById('task-list');
+    const taskForm = document.getElementById('task-form');
+    const taskInput = document.getElementById('task-input');
+    const errorMsg = document.getElementById('error-msg');
+    const filterButtons = document.querySelectorAll('.filters button');
+
+    function renderTasks() {
+      // Clear list
+      taskListEl.innerHTML = '';
+
+      // Filter tasks
+      let filteredTasks = tasks;
+      if (currentFilter === 'completed') {
+        filteredTasks = tasks.filter(t => t.completed);
+      } else if (currentFilter === 'pending') {
+        filteredTasks = tasks.filter(t => !t.completed);
+      }
+
+      if (filteredTasks.length === 0) {
+        taskListEl.innerHTML = '<li style="text-align:center; color:#666;">No tasks to show</li>';
+        return;
+      }
+
+      // Render each task
+      filteredTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = task.completed ? 'completed' : '';
+        
+        const span = document.createElement('span');
+        span.className = 'task-title';
+        span.textContent = task.title;
+        // Toggle completed on click
+        span.addEventListener('click', () => toggleComplete(task.id));
+        
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'delete-btn';
+        delBtn.addEventListener('click', () => deleteTask(task.id));
+        
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        taskListEl.appendChild(li);
+      });
+    }
+
+    function toggleComplete(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
+        renderTasks();
+      }
+    }
+
+    function deleteTask(id) {
+      const index = tasks.findIndex(t => t.id === id);
+      if (index > -1) {
+        tasks.splice(index, 1);
+        renderTasks();
+      }
+    }
+
+    function addTask(title) {
+      const newId = tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+      tasks.push({ id: newId, title: title, completed: false });
+      renderTasks();
+    }
+
+    // Form submission handler
+    taskForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = taskInput.value.trim();
+      if (!title) {
+        showError('Task title cannot be empty!');
+        return;
+      }
+      addTask(title);
+      taskInput.value = '';
+      clearError();
+    });
+
+    // Show error
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+    }
+
+    // Clear error
+    function clearError() {
+      errorMsg.textContent = '';
+      errorMsg.style.display = 'none';
+    }
+
+    // Filter buttons handler
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderTasks();
+      });
+    });
+
+    // Initial render
+    renderTasks();
+  </script>
+
+</body>
+</html>
