@@ -9,7 +9,7 @@ A simple frontend task manager app built with plain HTML, CSS, and JavaScript. U
 - Filter tasks by All, Completed, or Pending
 
 ## How to use
-1. Open `index.html` in your browser.
+1. Open `krz.html` in your browser.
 2. Use the input box to add a new task. The title must not be empty.
 3. Click on a task title to toggle its completed status.
 4. Click "Delete" to remove a task.
